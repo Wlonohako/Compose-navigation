@@ -6,6 +6,7 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -29,19 +30,21 @@ import androidx.navigation.compose.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-
 class MainActivity : ComponentActivity() {
+    private val viewModel: PersonViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
-            MyApp()
+            MyApp(viewModel)
         }
     }
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun MyApp() {
+fun MyApp(viewModel: PersonViewModel) {
     val navController = rememberNavController()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -59,13 +62,11 @@ fun MyApp() {
                 Scaffold(
                     topBar = { AppTopBar { scope.launch { drawerState.open() } } }
                 ) {
-                    AppContent(navController)
+                    AppContent(navController, viewModel)
                 }
             }
-            composable("heartScreen/{name}/{surname}") { backStackEntry ->
-                val name = backStackEntry.arguments?.getString("name") ?: ""
-                val surname = backStackEntry.arguments?.getString("surname") ?: ""
-                HeartScreen(navController, name, surname)
+            composable("heartScreen") { backStackEntry ->
+                HeartScreen(navController, viewModel)
             }
             composable("starScreen/{name}/{surname}") { backStackEntry ->
                 val name = backStackEntry.arguments?.getString("name") ?: ""
@@ -122,31 +123,37 @@ fun AppTopBar(onMenuClick: () -> Unit) {
 }
 
 @Composable
-fun AppContent(navController: NavController) {
-    var name by remember { mutableStateOf("") }
-    var surname by remember { mutableStateOf("") }
-    var age by remember { mutableStateOf("") }
-    var weight by remember { mutableStateOf("") }
-    var height by remember { mutableStateOf("") }
+fun AppContent(navController: NavController, viewModel: PersonViewModel) {
+//    var name by remember { mutableStateOf("") }
+//    var surname by remember { mutableStateOf("") }
+//    var age by remember { mutableStateOf("") }
+//    var weight by remember { mutableStateOf("") }
+//    var height by remember { mutableStateOf("") }
+    var person by remember { mutableStateOf(PersonUiState()) }
     
     Surface(color = Color.White, modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            WelcomeUI(name, surname, age, weight, height,onNameChange = { name = it }, onSurnameChange = { surname = it }, onAgeChange = {age = it}, onWeightChange = {weight = it}, onHeightChange = {height = it})
+            WelcomeUI(person, onPersonChange = { person = it },viewModel)
             Spacer(modifier = Modifier.height(16.dp))
-            HeartButton(navController = navController, name = name, surname = surname)
-            StarButton(navController = navController, name = name, surname = surname
+            HeartButton(navController = navController, viewModel, person)
+            StarButton(navController = navController, name = person.name, surname = person.surname
             )
         }
     }
 }
 
 @Composable
-fun HeartButton(navController: NavController, name: String, surname: String) {
+fun HeartButton(navController: NavController, viewModel: PersonViewModel, person: PersonUiState) {
     Button(
-        onClick = { navController.navigate("heartScreen/$name/$surname") }
+        onClick = { navController.navigate("heartScreen")
+            if (person.age != null && person.weight != null && person.height != null) {
+                viewModel.addData(person.name, person.surname, person.age, person.weight,
+                    person.height
+                ) }
+        }
     ) {
         Icon(
             imageVector = Icons.Default.Favorite,
@@ -163,7 +170,7 @@ fun StarButton(navController: NavController, name: String, surname: String) {
     Button(
         onClick = {
             navController.navigate("starScreen/$name/$surname") {
-                popUpTo("heartScreen/$name/$surname") { inclusive = true }
+                popUpTo("heartScreen") { inclusive = true }
             }
         },
         modifier = Modifier.padding(top = 16.dp)
@@ -180,29 +187,36 @@ fun StarButton(navController: NavController, name: String, surname: String) {
 
 @Composable
 fun WelcomeUI(
-    name: String,
-    surname: String,
-    age: String,
-    weight: String,
-    height: String,
-    onNameChange: (String) -> Unit,
-    onSurnameChange: (String) -> Unit,
-    onAgeChange: (String) -> Unit,
-    onWeightChange: (String) -> Unit,
-    onHeightChange: (String) -> Unit,
+    person: PersonUiState,
+    onPersonChange: (PersonUiState) -> Unit,
+    viewModel: PersonViewModel
 ) {
     var greeting by remember { mutableStateOf("") }
 
     Text("Witaj w Compose!", fontSize = 24.sp, modifier = Modifier.padding(bottom = 16.dp))
-    InputStringField(value = name, label = "Wpisz swoje imię", icon = Icons.Default.Person, onValueChange = onNameChange)
-    InputStringField(value = surname, label = "Wpisz swoje nazwisko", icon = Icons.Default.AccountBox, onValueChange = onSurnameChange)
-    InputIntField(value = age, label = "Wpisz swój wiek", icon = Icons.Default.Edit, onValueChange = onAgeChange)
-    InputIntField(value = weight, label = "Wpisz swóją wagę", icon = Icons.Default.Edit, onValueChange = onWeightChange)
-    InputIntField(value = height, label = "Wpisz swój wzrost", icon = Icons.Default.Edit, onValueChange = onHeightChange)
+    InputStringField(value = person.name, label = "Wpisz swoje imię", icon = Icons.Default.Person, onValueChange = { newName ->
+        onPersonChange(person.copy(name = newName))
+    })
+    InputStringField(value = person.surname, label = "Wpisz swoje nazwisko", icon = Icons.Default.AccountBox, onValueChange = { newSurname ->
+        onPersonChange(person.copy(surname = newSurname))
+    })
+    InputIntField(value = person.age?.toString() ?: "", label = "Wpisz swój wiek", icon = Icons.Default.Edit, onValueChange = { newAge ->
+        onPersonChange(person.copy(age = newAge.toInt()))
+    })
+    InputIntField(value = person.weight?.toString() ?: "", label = "Wpisz swóją wagę", icon = Icons.Default.Edit, onValueChange = { newWeight ->
+        onPersonChange(person.copy(weight = newWeight.toInt()))
+    })
+    InputIntField(value = person.height?.toString() ?: "", label = "Wpisz swój wzrost", icon = Icons.Default.Edit, onValueChange = { newHeight ->
+        onPersonChange(person.copy(height = newHeight.toInt()))
+    })
 
 
     Button(
-        onClick = { greeting = "Cześć, $name $surname!" },
+        onClick = { greeting = "Cześć, ${person.name} ${person.surname}!"
+            if (person.age != null && person.weight != null && person.height != null) {
+            viewModel.addData(person.name, person.surname, person.age, person.weight,
+                person.height
+            ) } },
         elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 8.dp),
         colors = ButtonDefaults.buttonColors(Color.Gray),
         shape = MaterialTheme.shapes.medium
