@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,14 +16,21 @@ import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StarScreen(navController: NavController, name: String, surname: String) {
+fun StarScreen(navController: NavController, name: String, viewModel: GenderViewModel) {
+    LaunchedEffect(name) {
+        viewModel.getGender(name)
+    }
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Ekran Gwiazdki", color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Wróć", tint = Color.White)
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Wróć",
+                            tint = Color.White
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = Color.DarkGray)
@@ -44,7 +52,10 @@ fun StarScreen(navController: NavController, name: String, surname: String) {
                 modifier = Modifier.size(64.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "Miło Cię widzieć, $name $surname!", fontSize = 20.sp)
+            val genderInfo = viewModel.genderInfo
+            if (genderInfo != null) {
+                Text(text = "Miło Cię widzieć, ${genderInfo.gender}!", fontSize = 20.sp)
+            }
         }
     }
 }

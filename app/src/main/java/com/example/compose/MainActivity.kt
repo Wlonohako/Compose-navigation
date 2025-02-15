@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.*
 import kotlinx.coroutines.CoroutineScope
@@ -68,10 +69,10 @@ fun MyApp(viewModel: PersonViewModel) {
             composable("heartScreen") { backStackEntry ->
                 HeartScreen(navController, viewModel)
             }
-            composable("starScreen/{name}/{surname}") { backStackEntry ->
+            composable("starScreen/{name}") { backStackEntry ->
                 val name = backStackEntry.arguments?.getString("name") ?: ""
-                val surname = backStackEntry.arguments?.getString("surname") ?: ""
-                StarScreen(navController, name, surname)
+
+                StarScreen(navController, name, viewModel = viewModel() )
             }
 
         }
@@ -102,6 +103,7 @@ fun DrawerItem(
         selected = isSelected,
         onClick = {
             scope.launch { drawerState.close() }
+            //TODO not working for heartScreen
             navController.navigate(route.replace("{name}", "anon").replace("{surname}", "user"))
         },
         modifier = Modifier.padding(vertical = 8.dp)
