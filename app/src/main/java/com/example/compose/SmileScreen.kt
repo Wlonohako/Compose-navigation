@@ -16,10 +16,7 @@ import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StarScreen(navController: NavController, name: String, viewModel: GenderViewModel) {
-    LaunchedEffect(name) {
-        viewModel.getGender(name)
-    }
+fun StarScreen(navController: NavController, name: String) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -52,10 +49,6 @@ fun StarScreen(navController: NavController, name: String, viewModel: GenderView
                 modifier = Modifier.size(64.dp)
             )
             Spacer(modifier = Modifier.height(16.dp))
-            val genderInfo = viewModel.genderInfo
-            if (genderInfo != null) {
-                Text(text = "Miło Cię widzieć, ${genderInfo.gender}!", fontSize = 20.sp)
-            }
         }
     }
 }
