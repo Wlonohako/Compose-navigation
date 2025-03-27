@@ -1,25 +1,17 @@
 package com.example.compose
 
 import GenderViewModel
-import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import kotlin.getValue
-import androidx.activity.viewModels
 
 
 import androidx.compose.runtime.LaunchedEffect
@@ -31,16 +23,16 @@ fun NameSexScreen(
     genderViewModel: GenderViewModel,
     navController: NavController
 ) {
-    // Collecting UI state from viewModel
+
     val uiState by viewModel.uiState.collectAsState()
     val genderState = genderViewModel.genderState
 
-    // Launch effect to fetch gender data whenever the name changes
+
     LaunchedEffect(uiState.name) {
         genderViewModel.getGender(uiState.name)
     }
 
-    // Main UI surface
+
     Surface(
         color = Color.White,
         modifier = Modifier
@@ -53,7 +45,7 @@ fun NameSexScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Display the gender state information
+
             when (genderState) {
                 is GenderState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.size(50.dp))
@@ -96,7 +88,6 @@ fun NameSexScreen(
                 }
             }
 
-            // Display PersonUiState data
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
@@ -140,7 +131,6 @@ fun NameSexScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Button to navigate back to home screen
             Button(onClick = {
                 navController.navigate("homeScreen") {
                     viewModel.clearUiState()
