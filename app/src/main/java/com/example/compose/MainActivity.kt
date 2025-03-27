@@ -65,7 +65,7 @@ fun MyApp(viewModel: PersonViewModel) {
 @Composable
 fun AppTopBar() {
     TopAppBar(
-        title = { Text("Scam", color = Color.White) },
+        title = { Text("App", color = Color.White) },
 
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.DarkGray
@@ -112,7 +112,7 @@ fun AppContent(viewModel: PersonViewModel) {
             NameSexScreen(viewModel)
         }
         composable("BMIScreen") { backStackEntry ->
-            BMIScreen(viewModel)
+            BMIScreen(viewModel, navController)
         }
     }
 }

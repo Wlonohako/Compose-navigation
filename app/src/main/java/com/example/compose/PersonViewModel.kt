@@ -38,4 +38,11 @@ class PersonViewModel : ViewModel() {
             )
         }
     }
+
+    fun clearUiState() {
+        _uiState.update {
+            PersonUiState()
+
+        }
+    }
 }
