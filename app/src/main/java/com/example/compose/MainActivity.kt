@@ -14,11 +14,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,31 +32,32 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-
+    private val viewModel: PersonViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            MyApp()
+            MyApp(viewModel)
         }
     }
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun MyApp() {
+fun MyApp(viewModel: PersonViewModel) {
 
 
     Scaffold(
         topBar = { AppTopBar() }
     ) {
-        AppContent()
+        AppContent(viewModel)
     }
 }
 
@@ -70,28 +74,45 @@ fun AppTopBar() {
 }
 
 @Composable
-fun AppContent() {
+fun AppContent(viewModel: PersonViewModel) {
     val navController = rememberNavController()
-    var person by remember { mutableStateOf(PersonUiState()) }
+    val uiState by viewModel.uiState.collectAsState()
 
-    Surface(
-        color = Color.White, modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            WelcomeUI(person, onPersonChange = { person = it })
-            Spacer(modifier = Modifier.height(16.dp))
-            NavigationButton(
-                navController,
-                "",
-                Icons.Default.Person,
-                "Sprawdź płeć swojego imienia",
-                person
-            )
+    NavHost(navController, startDestination = "homeScreen") {
+        composable("homeScreen") {
+            Surface(
+                color = Color.White, modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    WelcomeUI(uiState, viewModel)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    NavigationButton(
+                        navController,
+                        "NameSexScreen",
+                        Icons.Default.PlayArrow,
+                        "Przejdź do ekranu 2",
+                        uiState,
+                    )
+                    NavigationButton(
+                        navController,
+                        "BMIScreen",
+                        Icons.AutoMirrored.Filled.ArrowForward,
+                        "Przejdź do ekranu 3",
+                        uiState,
+                    )
+                }
+            }
+        }
+        composable("NameSexScreen") { backStackEntry ->
+            NameSexScreen(viewModel)
+        }
+        composable("BMIScreen") { backStackEntry ->
+            BMIScreen(viewModel)
         }
     }
 }
@@ -122,22 +143,23 @@ fun NavigationButton(
     }
 }
 
+
 fun isPersonValidate(personUiState: PersonUiState, context: Context): Boolean {
-    if (personUiState.name.isEmpty() || personUiState.surname.isEmpty() || personUiState.age == null || personUiState.weight == null || personUiState.height == null || personUiState.sex == null) {
+    if (personUiState.name.isEmpty() || personUiState.surname.isEmpty() || personUiState.sex == null) {
         Toast.makeText(context, "Wypełnij wszystkie pola", Toast.LENGTH_SHORT).show()
         return false
     }
-    if (personUiState.age < 0 || personUiState.age > 120) {
-        Toast.makeText(context, "Wiek musi być między 0 a 120", Toast.LENGTH_SHORT).show()
+    if (personUiState.age.toInt() < 10 || personUiState.age.toInt() > 100) {
+        Toast.makeText(context, "Wiek musi być między 10 a 120", Toast.LENGTH_SHORT).show()
         return false
     }
 
-    if (personUiState.weight < 0 || personUiState.weight > 300) {
-        Toast.makeText(context, "Waga musi być między 0 a 300", Toast.LENGTH_SHORT).show()
+    if (personUiState.weight.toInt() < 20 || personUiState.weight.toInt() > 100) {
+        Toast.makeText(context, "Waga musi być między 20 a 300", Toast.LENGTH_SHORT).show()
         return false
     }
-    if (personUiState.height < 0 || personUiState.height > 300) {
-        Toast.makeText(context, "Wzrost musi być między 0 a 300", Toast.LENGTH_SHORT).show()
+    if (personUiState.height.toInt() < 80 || personUiState.height.toInt() > 200) {
+        Toast.makeText(context, "Wzrost musi być między 80 a 300", Toast.LENGTH_SHORT).show()
         return false
     }
     return true
@@ -147,54 +169,68 @@ fun isPersonValidate(personUiState: PersonUiState, context: Context): Boolean {
 @Composable
 fun WelcomeUI(
     person: PersonUiState,
-    onPersonChange: (PersonUiState) -> Unit,
+    viewModel: PersonViewModel
 ) {
-
     Text("Witaj!", fontSize = 24.sp, modifier = Modifier.padding(bottom = 16.dp))
+
     InputStringField(
         value = person.name,
         label = "Wpisz swoje imię",
         icon = Icons.Default.Person,
         onValueChange = { newName ->
-            onPersonChange(person.copy(name = newName))
+            viewModel.updatePerson(name = newName)
         })
+
     InputStringField(
         value = person.surname,
         label = "Wpisz swoje nazwisko",
         icon = Icons.Default.AccountBox,
         onValueChange = { newSurname ->
-            onPersonChange(person.copy(surname = newSurname))
+            viewModel.updatePerson(surname = newSurname)
         })
+
     InputIntField(
-        value = person.age?.toString() ?: "",
+        value = person.age,
         label = "Wpisz swój wiek",
         icon = Icons.Default.Edit,
         onValueChange = { newAge ->
-            onPersonChange(person.copy(age = newAge.toInt()))
-        })
+            viewModel.updatePerson(age = newAge)
+        }
+    )
+
     InputIntField(
-        value = person.height?.toString() ?: "",
+        value = person.height,
         label = "Wpisz swój wzrost",
         icon = Icons.Default.Edit,
         onValueChange = { newHeight ->
-            onPersonChange(person.copy(height = newHeight.toInt()))
-        })
+            viewModel.updatePerson(height = newHeight)
+        }
+    )
+
     InputIntField(
-        value = person.weight?.toString() ?: "",
-        label = "Wpisz swóją wagę",
+        value = person.weight,
+        label = "Wpisz swoją wagę",
         icon = Icons.Default.Edit,
         onValueChange = { newWeight ->
-            onPersonChange(person.copy(weight = newWeight.toInt()))
-        })
+            viewModel.updatePerson(weight = newWeight)
+        }
+    )
+
     SelectDropdownField(
-        value = (if (person.sex == null) "Brak" else if (person.sex) "Mężczyzna" else "Kobieta"),
+        value = when (person.sex) {
+            null -> "Brak"
+            true -> "Mężczyzna"
+            false -> "Kobieta"
+        },
         label = "Wybierz płeć",
         icon = Icons.Default.Edit,
         options = listOf("Kobieta", "Mężczyzna"),
-        onValueChange = { newSex -> onPersonChange(person.copy(sex = if (newSex == "Kobieta") false else true)) }
+        onValueChange = { newSex ->
+            viewModel.updatePerson(sex = newSex == "Mężczyzna")
+        }
     )
-
 }
+
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)

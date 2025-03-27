@@ -9,9 +9,9 @@ import kotlinx.coroutines.flow.update
 data class PersonUiState(
     val name: String = "",
     val surname: String = "",
-    val age: Int? = null,
-    val weight: Int? = null,
-    val height: Int? = null,
+    val age: String = "",
+    val weight: String = "",
+    val height: String = "",
     val sex: Boolean? = null
 )
 
@@ -22,9 +22,9 @@ class PersonViewModel : ViewModel() {
     fun updatePerson(
         name: String? = null,
         surname: String? = null,
-        age: Int? = null,
-        weight: Int? = null,
-        height: Int? = null,
+        age: String? = null,
+        weight: String? = null,
+        height: String? = null,
         sex: Boolean? = null
     ) {
         _uiState.update { currentState ->
