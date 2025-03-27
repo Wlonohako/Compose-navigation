@@ -4,7 +4,6 @@ package com.example.compose
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.drawable.Icon
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -16,13 +15,9 @@ import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccountBox
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,32 +27,30 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val viewModel: PersonViewModel by viewModels()
+    private val genderViewModel: GenderViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            MyApp(viewModel)
+            MyApp(viewModel, genderViewModel)
         }
     }
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun MyApp(viewModel: PersonViewModel) {
+fun MyApp(viewModel: PersonViewModel, genderViewModel: GenderViewModel) {
 
 
     Scaffold(
         topBar = { AppTopBar() }
     ) {
-        AppContent(viewModel)
+        AppContent(viewModel, genderViewModel)
     }
 }
 
@@ -74,7 +67,7 @@ fun AppTopBar() {
 }
 
 @Composable
-fun AppContent(viewModel: PersonViewModel) {
+fun AppContent(viewModel: PersonViewModel, genderViewModel: GenderViewModel) {
     val navController = rememberNavController()
     val uiState by viewModel.uiState.collectAsState()
 
@@ -109,7 +102,7 @@ fun AppContent(viewModel: PersonViewModel) {
             }
         }
         composable("NameSexScreen") { backStackEntry ->
-            NameSexScreen(viewModel)
+            NameSexScreen(viewModel, genderViewModel, navController)
         }
         composable("BMIScreen") { backStackEntry ->
             BMIScreen(viewModel, navController)

@@ -46,7 +46,7 @@ class GenderViewModel : ViewModel() {
                         }
                     }
                 } catch (e: Exception) {
-                    genderInfo = null
+                    e.printStackTrace()
                 }
 
             }
