@@ -1,5 +1,6 @@
 package com.example.compose
 
+import GenderViewModel
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -20,6 +21,9 @@ import androidx.navigation.NavController
 import kotlin.getValue
 import androidx.activity.viewModels
 
+
+import androidx.compose.runtime.LaunchedEffect
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NameSexScreen(
@@ -29,6 +33,11 @@ fun NameSexScreen(
 ) {
 
     val uiState by viewModel.uiState.collectAsState()
+    val genderState = genderViewModel.genderState
+
+    LaunchedEffect(uiState.name) {
+        genderViewModel.getGender(uiState.name)
+    }
 
     Surface(
         color = Color.White,
@@ -40,38 +49,51 @@ fun NameSexScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-
-
             Spacer(modifier = Modifier.height(16.dp))
 
-            genderViewModel.getGender(uiState.name)
+            when (genderState) {
+                is GenderState.Loading -> {
 
-            Spacer(modifier = Modifier.height(32.dp))
+                    CircularProgressIndicator(modifier = Modifier.size(50.dp))
+                }
 
-            genderViewModel.genderInfo?.let {
-                Text(
-                    text = "Name: ${it.name}",
-                    style = MaterialTheme.typography.headlineMedium,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Gender: ${it.gender}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Probability: ${"%.2f".format(it.probability)}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Count: ${it.count}",
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center
-                )
+                is GenderState.Error -> {
+
+                    Text(
+                        text = "Error: ${genderState.message}",
+                        color = Color.Red,
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                is GenderState.Success -> {
+
+                    val genderInfo = genderState.data
+                    Text(
+                        text = "Name: ${genderInfo.name}",
+                        style = MaterialTheme.typography.headlineMedium,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Gender: ${genderInfo.gender}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Probability: ${"%.2f".format(genderInfo.probability)}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Count: ${genderInfo.count}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -80,12 +102,9 @@ fun NameSexScreen(
                 navController.navigate("homeScreen") {
                     viewModel.clearUiState()
                 }
-
             }) {
                 Text("Powrót do ekranu startowego")
             }
         }
     }
 }
-
-

@@ -1,5 +1,3 @@
-package com.example.compose
-
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -19,12 +17,21 @@ data class GenderInfo(
     val count: Int
 )
 
+sealed class GenderState {
+    object Loading : GenderState()
+    data class Success(val data: GenderInfo) : GenderState()
+    data class Error(val message: String) : GenderState()
+}
+
 class GenderViewModel : ViewModel() {
     private var client = OkHttpClient()
-    var genderInfo by mutableStateOf<GenderInfo?>(null)
+    var genderState by mutableStateOf<GenderState>(GenderState.Loading)
         private set
 
     fun getGender(name: String) {
+
+        genderState = GenderState.Loading
+
         viewModelScope.launch {
             val url = "https://api.genderize.io"
             val request = Request.Builder()
@@ -32,25 +39,29 @@ class GenderViewModel : ViewModel() {
                 .build()
             withContext(Dispatchers.IO) {
                 try {
-
                     client.newCall(request).execute().use { response ->
-                        response.body?.string().let { responseBody ->
-                            val json = JSONObject(responseBody!!)
-                            genderInfo = GenderInfo(
+                        val responseBody = response.body?.string()
+                        if (response.isSuccessful && responseBody != null) {
+                            val json = JSONObject(responseBody)
+                            val genderInfo = GenderInfo(
                                 name = json.getString("name"),
                                 gender = json.getString("gender"),
                                 probability = json.getDouble("probability"),
                                 count = json.getInt("count")
                             )
 
+                            genderState = GenderState.Success(genderInfo)
+                        } else {
+
+                            genderState =
+                                GenderState.Error("$response")
                         }
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
-                }
 
+                    genderState = GenderState.Error("Exception: ${e.localizedMessage}")
+                }
             }
         }
-
     }
 }
